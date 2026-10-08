@@ -3,7 +3,7 @@ import json
 
 from django.core.management.base import BaseCommand, CommandError
 
-from pipeline.services.extract import BulkExportExtractor, ExtractError, LocalFolderExtractor
+from pipeline.services.extract import BulkExportExtractor, ExtractError
 from pipeline.services.fhir_client import FhirError
 from pipeline.services.transform import TransformEngine, TransformError
 from pipeline.services.validate import ValidationEngine, ValidationError
@@ -14,7 +14,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("step", choices=["extract", "transform", "validate"])
-        parser.add_argument("--from-dir", help="extract: load local synthetic NDJSON files instead of $export")
         parser.add_argument("--workers", type=int, help="extract: parallel downloads (default: EXPORT_WORKERS)")
         parser.add_argument("--rebuild", action="store_true", help="transform: clear the internal model first")
         parser.add_argument("--sample-rate", type=float, default=0.01, help="validate: share re-mapped and compared")
@@ -31,11 +30,7 @@ class Command(BaseCommand):
         self.stdout.write(json.dumps(summary, indent=2, default=str))
 
     def extract(self, options):
-        if options["from_dir"]:
-            extractor = LocalFolderExtractor(options["from_dir"], workers=options["workers"])
-        else:
-            extractor = BulkExportExtractor(workers=options["workers"])
-        return asyncio.run(extractor.run())
+        return asyncio.run(BulkExportExtractor(workers=options["workers"]).run())
 
     def transform(self, options):
         return TransformEngine().run(rebuild=options["rebuild"])

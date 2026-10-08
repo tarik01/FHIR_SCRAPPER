@@ -23,7 +23,8 @@ export function gender(value) {
 export function deceased(patient) {
   if (patient.deceased === null || patient.deceased === undefined) return NOT_RECORDED
   if (!patient.deceased) return 'No'
-  return patient.deceased_at ? `Yes (${patient.deceased_at.slice(0, 10)})` : 'Yes'
+  if (!patient.deceased_at) return 'Yes'
+  return `Yes (${patient.deceased_at.slice(0, { year: 4, month: 7 }[patient.deceased_precision] ?? 10)})`
 }
 
 export function effectiveDate(observation) {

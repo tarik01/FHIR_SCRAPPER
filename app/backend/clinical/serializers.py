@@ -16,6 +16,7 @@ def patient_detail(patient, identifiers):
     return {
         **patient_summary(patient),
         "deceased_at": patient.deceased_at,
+        "deceased_precision": patient.deceased_precision,
         "source_version": patient.source_version,
         "source_last_updated": patient.source_last_updated,
         "identifiers": [

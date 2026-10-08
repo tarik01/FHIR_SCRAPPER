@@ -41,6 +41,7 @@ class PatientRecord:
     gender: str | None
     deceased: bool | None
     deceased_at: datetime | None
+    deceased_precision: str
     identifiers: tuple[Identifier, ...]
 
 
@@ -72,6 +73,10 @@ class ObservationRecord:
     components_json: list | None
 
 
+class MissingTimezone(ValueError):
+    pass
+
+
 def date_precision(month, day):
     return "day" if day else "month" if month else "year"
 
@@ -83,7 +88,7 @@ def parse_fhir_datetime(value):
         return datetime(int(year), int(month or 1), int(day or 1), tzinfo=UTC), date_precision(month, day)
     parsed = datetime.fromisoformat(EXTRA_FRACTION_DIGITS.sub(r"\1", value).replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
+        raise MissingTimezone(value)
     return parsed.astimezone(UTC), "second"
 
 
@@ -143,7 +148,7 @@ class PatientMapper:
         try:
             given_name, family_name = self.name(resource.get("name"))
             birth_date, birth_date_precision = self.birth_date(resource.get("birthDate"))
-            deceased, deceased_at = self.deceased(resource)
+            deceased, deceased_at, deceased_precision = self.deceased(resource)
         except Reject as rejection:
             return Rejected(str(rejection))
         return PatientRecord(
@@ -154,6 +159,7 @@ class PatientMapper:
             gender=self.gender(resource.get("gender")),
             deceased=deceased,
             deceased_at=deceased_at,
+            deceased_precision=deceased_precision,
             identifiers=self.identifiers(resource.get("identifier")),
         )
 
@@ -186,12 +192,14 @@ class PatientMapper:
     def deceased(self, resource):
         if "deceasedDateTime" in resource:
             try:
-                return True, parse_fhir_datetime(resource["deceasedDateTime"])[0]
+                return True, *parse_fhir_datetime(resource["deceasedDateTime"])
+            except MissingTimezone:
+                raise Reject("deceasedDateTime without timezone")
             except ValueError:
                 raise Reject("invalid deceasedDateTime")
         if "deceasedBoolean" in resource:
-            return bool(resource["deceasedBoolean"]), None
-        return None, None
+            return bool(resource["deceasedBoolean"]), None, ""
+        return None, None, ""
 
     def gender(self, value):
         return value if value in GENDERS else None
@@ -301,6 +309,8 @@ class ObservationMapper:
                 start, precision = parse_fhir_datetime(period["start"]) if period.get("start") else (None, "")
                 end = parse_fhir_datetime(period["end"])[0] if period.get("end") else None
                 return start, end, precision
+        except MissingTimezone:
+            raise Reject("effective date without timezone")
         except ValueError:
             raise Reject("invalid effective date")
         return None, None, ""

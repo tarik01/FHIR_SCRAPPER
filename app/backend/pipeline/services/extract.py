@@ -3,10 +3,8 @@ import hashlib
 import json
 import logging
 import time
-import uuid
 from collections import Counter
 from dataclasses import dataclass
-from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from asgiref.sync import sync_to_async
@@ -33,9 +31,9 @@ FAIL_FAST_HINTS = {
     400: "invalid export request: check _type / _since",
     401: "authentication failed: check credentials",
     403: "authentication failed: check credentials and scopes",
-    404: "$export not supported: set EXTRACT_STRATEGY=paged_search",
-    405: "$export not supported: set EXTRACT_STRATEGY=paged_search",
-    501: "$export not supported: set EXTRACT_STRATEGY=paged_search",
+    404: "$export not supported by this server",
+    405: "$export not supported by this server",
+    501: "$export not supported by this server",
 }
 
 
@@ -94,12 +92,6 @@ def parse_ndjson(body, expected_type):
     return rows
 
 
-def first_line_resource_type(path):
-    with path.open() as handle:
-        first = next((line for line in handle if line.strip()), "{}")
-    return json.loads(first).get("resourceType", "Unknown")
-
-
 class ExportStore:
     async def find_resumable_job(self):
         return await (
@@ -143,25 +135,6 @@ class ExportStore:
             [ExportFile(job=job, resource_type=item["type"], url=item["url"]) for item in outputs],
             ignore_conflicts=True,
         )
-
-    @sync_to_async
-    @transaction.atomic
-    def register_local_job(self, directory):
-        paths = sorted(directory.glob("*.ndjson"))
-        if not paths:
-            raise ExtractError(f"no .ndjson files in {directory}")
-        outputs = [{"type": first_line_resource_type(path), "url": str(path.resolve())} for path in paths]
-        job = ExportJob.objects.create(
-            job_id=f"local-{uuid.uuid4().hex[:12]}",
-            source_base_url=settings.FHIR_BASE_URL,
-            request_url=f"file://{directory.resolve()}",
-            manifest_json={"output": outputs, "error": []},
-            kicked_off_at=timezone.now(),
-        )
-        ExportFile.objects.bulk_create(
-            [ExportFile(job=job, resource_type=item["type"], url=item["url"]) for item in outputs]
-        )
-        return job
 
     async def files_to_download(self, job):
         files = job.files.filter(
@@ -408,17 +381,3 @@ class BulkExportExtractor(Extractor):
         )
         return response.json().get("total")
 
-
-class LocalFolderExtractor(Extractor):
-    def __init__(self, directory, workers=None, store=None):
-        super().__init__(workers, store)
-        self.directory = Path(directory)
-
-    async def run(self):
-        job = await self.store.register_local_job(self.directory)
-        log.info("export_local_registered", extra={"job_id": job.job_id})
-        await self.download_pending_files(job)
-        return await self.finish(job)
-
-    async def fetch(self, export_file):
-        return Path(export_file.url).read_bytes(), None

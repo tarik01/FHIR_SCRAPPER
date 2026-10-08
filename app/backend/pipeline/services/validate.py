@@ -153,10 +153,6 @@ class ValidationEngine:
         results = []
         for resource_type in settings.EXPORT_RESOURCE_TYPES:
             actual = lines.get(resource_type, 0)
-            if job.expected_counts is None:
-                results.append(CheckResult(f"export_lines({resource_type})", True, "n/a", actual,
-                                           "local import: no source count to compare"))
-                continue
             expected = job.expected_counts.get(resource_type)
             results.append(CheckResult(
                 f"export_lines({resource_type})", actual == expected, expected, actual,

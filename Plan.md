@@ -4,7 +4,7 @@
 
 - **Discovery (manual, one-time, already done).** We explored https://hapi.fhir.org/baseR4 to check the FHIR version, supported operations, limits and data quality (Used AI for this discovery).
   - Server: `/metadata` confirms FHIR 4.0.1 (R4) and support for `$export`, `_summary=count` and `_history`.
-  - Decision: extract with `$export`, and fall back to paged search (`_count=500`, `_lastUpdated` windows) if it is unavailable. The strategy is a config setting, not a runtime decision.
+  - Decision: extract with `$export` only, since the server supports it. A paged-search fallback (`_count=500`, `_lastUpdated` windows) for servers without `$export` is not part of the MVP; it is a next step.
 - **Extract with `$export`.**
   - **Kick-off**: `GET $export?_type=Patient,Observation` with `Prefer: respond-async`. The server answers `202` with a `Content-Location` header, which is the job's status URL. Any other answer (`404/405/501`, `401/403`) fails fast with a clear error.
   - **Poll**: call the status URL. `202` means still running (wait for `Retry-After`); `200` returns the manifest with `transactionTime` and the list of NDJSON file URLs.
@@ -22,7 +22,7 @@
 
 - **API limits**. The legacy API is a shared clinical system, so we stay conservative:
   - Small worker pool: 3 parallel downloads (configurable). During discovery, latency doubled under 10 concurrent requests, so adding more workers adds load without adding speed.
-  - Max page size: if we fall back to paged search, we use `_count=500`, the server's maximum, to keep requests to a minimum.
+  - Max page size: if the paged-search fallback is added, it should use `_count=500`, the server's maximum, to keep requests to a minimum.
   - Server signals first: we honour `Retry-After` and back off on `429/5xx`.
   - Estimate: 50k patients means ~480 files of 1,000 resources each, under 10 minutes to download with 3 workers.
   - Circuit breaker: after 10 consecutive failures across different requests (the counter resets on any success), all workers stop and the run ends with an `ERROR` log, instead of each file retrying against a server that is down.

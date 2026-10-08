@@ -18,6 +18,7 @@ log = logging.getLogger("pipeline.transform")
 
 PATIENT_FIELDS = [
     "given_name", "family_name", "birth_date", "birth_date_precision", "gender", "deceased", "deceased_at",
+    "deceased_precision",
 ]
 OBSERVATION_FIELDS = [
     "patient", "status", "category", "code_system", "code", "code_display", "code_text", "value_type",
@@ -119,13 +120,17 @@ class Upserter:
 
 
 class QuarantineRecorder:
-    def __init__(self, resource_type, stats, mapping_version):
+    def __init__(self, model, resource_type, stats, source_system, mapping_version):
+        self.model = model
         self.resource_type = resource_type
         self.stats = stats
+        self.source_system = source_system
         self.mapping_version = mapping_version
 
     def record(self, rejected, mapped_source_ids):
-        touched = list(mapped_source_ids) + [raw.source_id for raw, _ in rejected]
+        rejected_ids = [raw.source_id for raw, _ in rejected]
+        self.model.objects.filter(source_system=self.source_system, source_id__in=rejected_ids).delete()
+        touched = list(mapped_source_ids) + rejected_ids
         Quarantine.objects.filter(resource_type=self.resource_type, source_id__in=touched).delete()
         Quarantine.objects.bulk_create([
             Quarantine(raw_resource=raw, resource_type=self.resource_type, source_id=raw.source_id,
@@ -136,6 +141,7 @@ class QuarantineRecorder:
 
 
 class PatientTransformer:
+    model = Patient
     resource_type = "Patient"
 
     def __init__(self, engine):
@@ -143,7 +149,7 @@ class PatientTransformer:
         self.stats = Counter()
         self.mapper = PatientMapper(today=timezone.now().date())
         self.upserter = engine.upserter(Patient, PATIENT_FIELDS, self.stats)
-        self.quarantine = engine.quarantine(self.resource_type, self.stats)
+        self.quarantine = engine.quarantine(self.model, self.resource_type, self.stats)
 
     def run(self):
         for raw_ids in in_batches(self.engine.raw_store.latest_ids(self.resource_type), self.engine.batch_size):
@@ -181,6 +187,7 @@ class PatientTransformer:
 
 
 class ObservationTransformer:
+    model = Observation
     resource_type = "Observation"
 
     def __init__(self, engine):
@@ -191,7 +198,7 @@ class ObservationTransformer:
         )
         self.mapper = ObservationMapper(known_patient_ids=self.patient_ids, base_url=engine.source_system)
         self.upserter = engine.upserter(Observation, OBSERVATION_FIELDS, self.stats)
-        self.quarantine = engine.quarantine(self.resource_type, self.stats)
+        self.quarantine = engine.quarantine(self.model, self.resource_type, self.stats)
 
     def run(self):
         for raw_ids in in_batches(self.engine.raw_store.latest_ids(self.resource_type), self.engine.batch_size):
@@ -267,8 +274,8 @@ class TransformEngine:
     def upserter(self, model, fields, stats):
         return Upserter(model, fields, stats, self.source_system, self.mapping_version)
 
-    def quarantine(self, resource_type, stats):
-        return QuarantineRecorder(resource_type, stats, self.mapping_version)
+    def quarantine(self, model, resource_type, stats):
+        return QuarantineRecorder(model, resource_type, stats, self.source_system, self.mapping_version)
 
     def ensure_export_completed(self):
         if not ExportJob.objects.filter(status=ExportJob.Status.COMPLETED).exists():

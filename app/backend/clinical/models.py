@@ -16,6 +16,7 @@ class Patient(models.Model):
     gender = models.CharField(max_length=16, null=True)
     deceased = models.BooleanField(null=True)
     deceased_at = models.DateTimeField(null=True)
+    deceased_precision = models.CharField(max_length=8, blank=True)
     mapping_version = models.CharField(max_length=16)
     migrated_at = models.DateTimeField()
 

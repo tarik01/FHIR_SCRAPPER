@@ -42,7 +42,6 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 FHIR_BASE_URL = os.environ.get("FHIR_BASE_URL", "https://hapi.fhir.org/baseR4")
-EXTRACT_STRATEGY = "export"
 EXPORT_RESOURCE_TYPES = ["Patient", "Observation"]
 EXPORT_WORKERS = int(os.environ.get("EXPORT_WORKERS", "3"))
 EXPORT_POLL_MAX_WAIT = int(os.environ.get("EXPORT_POLL_MAX_WAIT", "10"))
@@ -52,7 +51,7 @@ RETRY_MAX_BACKOFF_SECONDS = 30
 CIRCUIT_BREAKER_THRESHOLD = 10
 FILE_MAX_RUNS = 3
 TRANSFORM_BATCH_SIZE = 1000
-MAPPING_VERSION = "2"
+MAPPING_VERSION = "4"
 
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

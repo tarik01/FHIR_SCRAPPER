@@ -99,6 +99,16 @@ class TransformTests(TestCase):
         self.assertEqual(summary["patients"], {"stale_skipped": 1})
         self.assertEqual(Patient.objects.get().family_name, "Souza")
 
+    def test_record_that_becomes_invalid_leaves_the_internal_model(self):
+        self.raw(patient("p1"))
+        self.raw(observation("o1", "Patient/p1"))
+        TransformEngine().run()
+        self.raw(observation("o1", "Location/9", version="2"))
+        summary = TransformEngine().run()
+        self.assertEqual(summary["observations"], {"quarantined": 1})
+        self.assertFalse(Observation.objects.exists())
+        self.assertEqual(Quarantine.objects.get().source_id, "o1")
+
     def test_identifiers_are_replaced_on_update(self):
         self.raw(patient("p1", identifier=[{"system": "urn:a", "value": "1"}]))
         TransformEngine().run()

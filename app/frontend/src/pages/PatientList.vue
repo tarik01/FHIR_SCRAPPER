@@ -53,8 +53,8 @@ onMounted(load)
       <tbody>
         <tr v-for="patient in data.results" :key="patient.id">
           <td><RouterLink :to="`/patients/${patient.id}`">{{ fullName(patient) }}</RouterLink></td>
-          <td>{{ birthDate(patient) }}</td>
-          <td :class="{ muted: !patient.gender }">{{ gender(patient.gender) }}</td>
+          <td class="nowrap">{{ birthDate(patient) }}</td>
+          <td class="nowrap" :class="{ muted: !patient.gender }">{{ gender(patient.gender) }}</td>
           <td class="numeric">{{ patient.observation_count }}</td>
           <td class="muted mono">{{ patient.source_id }}</td>
         </tr>

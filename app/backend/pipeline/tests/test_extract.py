@@ -1,12 +1,10 @@
 import json
-import tempfile
-from pathlib import Path
 
 import httpx
 from django.test import TransactionTestCase, override_settings
 
 from pipeline.models import ExportFile, ExportJob, RawResource
-from pipeline.services.extract import BulkExportExtractor, LocalFolderExtractor
+from pipeline.services.extract import BulkExportExtractor
 from pipeline.services.fhir_client import FhirClient
 
 BASE = "https://fhir.example.test/baseR4"
@@ -120,28 +118,12 @@ class RemoteExtractTests(TransactionTestCase):
         self.assertEqual(await second_job.filter(inserted_count=0).acount(), 2)
         self.assertEqual(await second_job.exclude(duplicate_count=0).acount(), 2)
 
-
-class LocalExtractTests(TransactionTestCase):
-    def write(self, directory, name, body):
-        Path(directory, name).write_text(body)
-
-    async def test_local_files_are_loaded_and_new_versions_kept(self):
-        with tempfile.TemporaryDirectory() as directory:
-            self.write(directory, "Patient.ndjson", ndjson(patient("1"), patient("2")))
-            first = await LocalFolderExtractor(directory).run()
-            self.write(directory, "Patient.ndjson", ndjson(patient("1"), patient("2", version="2")))
-            second = await LocalFolderExtractor(directory).run()
-        self.assertEqual(first["status"], "completed")
-        self.assertEqual(second["status"], "completed")
-        self.assertEqual(await RawResource.objects.acount(), 3)
-        last_file = await ExportFile.objects.order_by("-id").afirst()
-        self.assertEqual((last_file.inserted_count, last_file.duplicate_count), (1, 1))
-
     async def test_invalid_file_fails_alone(self):
-        with tempfile.TemporaryDirectory() as directory:
-            self.write(directory, "a_patients.ndjson", ndjson(patient("1")))
-            self.write(directory, "b_broken.ndjson", ndjson(patient("2")) + "{not json\n")
-            summary = await LocalFolderExtractor(directory).run()
+        server = FakeExportServer({
+            "p1": ("Patient", ndjson(patient("1"))),
+            "p2": ("Patient", ndjson(patient("2")) + "{not json\n"),
+        })
+        summary = await BulkExportExtractor(client=server.client()).run()
         self.assertEqual(summary["files_done"], 1)
         self.assertEqual(summary["status"], "in_progress")
         broken = await ExportFile.objects.aget(status=ExportFile.Status.FAILED)

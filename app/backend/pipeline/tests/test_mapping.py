@@ -84,6 +84,14 @@ class PatientMappingTests(SimpleTestCase):
         self.assertEqual((record.deceased, record.deceased_at), (True, datetime(2020, 5, 1, tzinfo=UTC)))
         self.assertIsInstance(record, PatientRecord)
 
+    def test_partial_deceased_date_keeps_its_precision(self):
+        year_only = map_patient({"deceasedDateTime": "2020"})
+        self.assertEqual((year_only.deceased_at, year_only.deceased_precision),
+                         (datetime(2020, 1, 1, tzinfo=UTC), "year"))
+        self.assertEqual(map_patient({"deceasedDateTime": "2020-05"}).deceased_precision, "month")
+        self.assertEqual(map_patient({"deceasedDateTime": "2020-05-01T10:00:00Z"}).deceased_precision, "second")
+        self.assertEqual(map_patient({"deceasedBoolean": True}).deceased_precision, "")
+
 
 class ObservationSubjectTests(SimpleTestCase):
     def test_relative_patient_reference(self):
@@ -177,6 +185,12 @@ class ObservationCodeAndDateTests(SimpleTestCase):
     def test_seven_fraction_digits_are_parsed(self):
         parsed, _ = parse_fhir_datetime("2024-03-01T10:00:00.1234567+00:00")
         self.assertEqual(parsed.microsecond, 123456)
+
+    def test_datetime_without_timezone_is_quarantined_not_assumed_utc(self):
+        self.assertEqual(map_obs(effectiveDateTime="2026-09-29T09:00:00"),
+                         Rejected("effective date without timezone"))
+        self.assertEqual(map_patient({"deceasedDateTime": "2020-05-01T10:00:00"}),
+                         Rejected("deceasedDateTime without timezone"))
 
     def test_entered_in_error_status_is_kept(self):
         record = map_obs(status="entered-in-error")
