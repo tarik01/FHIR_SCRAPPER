@@ -1,7 +1,14 @@
 __pycache__/
 *.pyc
 app/backend/.venv/
-app/backend/db.sqlite3
+*.sqlite3
+*.sqlite3-*
+*.db
+*.sql
+*.dump
+.env
+.env.*
+!.env.example
 app/backend/logs/
 app/frontend/node_modules/
 app/frontend/dist/
