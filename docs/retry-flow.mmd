@@ -1,0 +1,26 @@
+flowchart TD
+    A["HTTP request<br/>(kick-off, poll or file download)"] --> B{Response?}
+
+    B -->|2xx| OK(["Success"])
+    B -->|"timeout · 429 · 5xx"| C{"attempt < 5?"}
+    B -->|"400 · 401/403 · 405/501"| X(["Fail fast<br/>clear error, no retry"])
+    B -->|"404 / 410"| E["Job = expired"]
+
+    C -->|yes| D["Wait: Retry-After<br/>or backoff + jitter<br/>2s → 4s → 8s → 16s → 30s"]
+    D --> A
+    C -->|no| F["File = failed<br/>log ERROR, other files continue"]
+
+    F --> R["Next run:<br/>retry only failed files"]
+    E --> K["Next run:<br/>new kick-off<br/>(dedup avoids duplicates)"]
+
+    R --> L{"Cap reached?"}
+    K --> L
+    L -->|no| A
+    L -->|yes| H(["Stop + alert human"])
+
+    classDef ok fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef bad fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    classDef warn fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    class OK ok
+    class X,H bad
+    class F,E warn

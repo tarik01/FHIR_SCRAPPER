@@ -1,0 +1,88 @@
+erDiagram
+    direction LR
+    raw_resources ||--o| quarantine : "rejected as"
+    raw_resources ||..o| patients : "mapped to"
+    raw_resources ||..o| observations : "mapped to"
+    patients ||--o{ observations : "has"
+    patients ||--o{ patient_identifiers : "has"
+    patients ||--o{ patient_duplicate_candidates : "candidate A"
+    patients ||--o{ patient_duplicate_candidates : "candidate B"
+
+    raw_resources {
+        int id PK
+        text resource_type
+        text source_id
+        text version_id
+        text payload "see raw store"
+    }
+
+    patients {
+        uuid id PK
+        text source_system UK "unique (source_system, source_id)"
+        text source_id UK "FHIR id"
+        text source_version "meta.versionId"
+        datetime source_last_updated "meta.lastUpdated, blocks stale overwrite"
+        text given_name "official name, else first"
+        text family_name
+        text birth_date "YYYY | YYYY-MM | YYYY-MM-DD"
+        text birth_date_precision "year | month | day"
+        text gender "male | female | other | unknown | null"
+        bool deceased
+        datetime deceased_at
+        text mapping_version
+        datetime migrated_at
+    }
+
+    patient_identifiers {
+        int id PK
+        uuid patient_id FK
+        text system "e.g. MRN, SSN system URI"
+        text value
+        text type_code "MR | SS | DL | ..."
+    }
+
+    observations {
+        uuid id PK
+        text source_system UK "unique (source_system, source_id)"
+        text source_id UK "FHIR id"
+        text source_version "meta.versionId"
+        datetime source_last_updated "meta.lastUpdated, blocks stale overwrite"
+        uuid patient_id FK "from subject Patient/{id}"
+        text status "final | preliminary | entered-in-error | ..."
+        text category "vital-signs | laboratory | ..."
+        text code_system "LOINC preferred"
+        text code
+        text code_display
+        text code_text "kept when no coding"
+        text value_type "Quantity | CodeableConcept | String | Boolean | Integer | none"
+        decimal value_num
+        text value_unit "UCUM"
+        text value_text
+        text data_absent_reason "why there is no value"
+        datetime effective_start "UTC"
+        datetime effective_end "only for effectivePeriod"
+        text effective_precision "second | day | month | year"
+        json components_json "e.g. blood pressure"
+        text mapping_version
+        datetime migrated_at
+    }
+
+    quarantine {
+        int id PK
+        int raw_resource_id FK
+        text resource_type "Patient | Observation"
+        text source_id
+        text reason "e.g. subject is not a Patient"
+        text mapping_version
+        datetime created_at
+    }
+
+    patient_duplicate_candidates {
+        int id PK
+        uuid patient_a_id FK
+        uuid patient_b_id FK
+        text match_reason "shared identifier | same name + birth date + gender"
+        text status "open | confirmed | rejected"
+        datetime created_at
+        datetime reviewed_at
+    }

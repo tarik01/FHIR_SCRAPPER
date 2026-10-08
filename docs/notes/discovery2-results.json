@@ -1,0 +1,345 @@
+{
+  "checked_at_utc": "2026-10-08T12:31:56.001013+00:00",
+  "base_url": "https://hapi.fhir.org/baseR4",
+  "requests": [
+    {
+      "query": "GET /metadata",
+      "status": 200,
+      "seconds": 3.24,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "CapabilityStatement",
+      "fhir_version": "4.0.1",
+      "software": {
+        "name": "HAPI FHIR Server",
+        "version": "8.13.10-SNAPSHOT/6bd250944e/2026-09-25"
+      },
+      "formats": [
+        "application/fhir+xml",
+        "xml",
+        "application/fhir+json",
+        "json",
+        "application/x-turtle",
+        "ttl",
+        "html/json",
+        "html/xml",
+        "html/turtle"
+      ],
+      "system_operations": [
+        "diff",
+        "reindex",
+        "hapi.fhir.reindex-status",
+        "export-poll-status",
+        "export",
+        "hfql-execute",
+        "perform-reindexing-pass",
+        "meta",
+        "mark-all-resources-for-reindexing",
+        "get-resource-counts",
+        "expunge",
+        "reindex-terminology",
+        "hapi.fhir.undo-replace-references",
+        "hapi.fhir.replace-references",
+        "graphql"
+      ],
+      "resources": {
+        "Observation": {
+          "interactions": [
+            "search-type",
+            "update",
+            "vread",
+            "read",
+            "patch",
+            "history-type",
+            "history-instance",
+            "delete",
+            "create"
+          ],
+          "search_params": [
+            "date",
+            "_language",
+            "combo-data-absent-reason",
+            "code",
+            "component-data-absent-reason",
+            "subject",
+            "combo-code-value-quantity",
+            "_lastUpdated",
+            "value-concept",
+            "value-date",
+            "derived-from",
+            "focus",
+            "part-of",
+            "has-member",
+            "_list",
+            "code-value-string",
+            "component-code-value-quantity",
+            "based-on",
+            "code-value-date",
+            "patient",
+            "specimen",
+            "component-code",
+            "code-value-quantity",
+            "combo-code-value-concept",
+            "value-string",
+            "identifier",
+            "performer",
+            "combo-code",
+            "method",
+            "value-quantity",
+            "component-value-quantity",
+            "_security",
+            "data-absent-reason",
+            "combo-value-quantity",
+            "encounter",
+            "_filter",
+            "code-value-concept",
+            "_profile",
+            "_tag",
+            "_has",
+            "_source",
+            "component-code-value-concept",
+            "_id",
+            "component-value-concept",
+            "category",
+            "device",
+            "combo-value-concept",
+            "status"
+          ],
+          "operations": [
+            "validate",
+            "hapi.fhir.undo-merge",
+            "meta-delete",
+            "meta-add",
+            "meta",
+            "hapi.fhir.merge",
+            "expunge",
+            "lastn",
+            "diff",
+            "reindex-dryrun",
+            "reindex",
+            "graphql"
+          ]
+        },
+        "Patient": {
+          "interactions": [
+            "search-type",
+            "update",
+            "vread",
+            "read",
+            "patch",
+            "history-type",
+            "history-instance",
+            "delete",
+            "create"
+          ],
+          "search_params": [
+            "_language",
+            "birthdate",
+            "deceased",
+            "address-state",
+            "gender",
+            "_lastUpdated",
+            "link",
+            "language",
+            "address-country",
+            "_list",
+            "death-date",
+            "phonetic",
+            "telecom",
+            "address-city",
+            "email",
+            "given",
+            "identifier",
+            "address",
+            "general-practitioner",
+            "_security",
+            "active",
+            "address-postalcode",
+            "_compartmentLastUpdated",
+            "_filter",
+            "_profile",
+            "phone",
+            "_tag",
+            "organization",
+            "_has",
+            "address-use",
+            "name",
+            "_source",
+            "_id",
+            "family"
+          ],
+          "operations": [
+            "export",
+            "summary",
+            "validate",
+            "hapi.fhir.undo-merge",
+            "meta-delete",
+            "meta-add",
+            "meta",
+            "hapi.fhir.merge",
+            "expunge",
+            "everything",
+            "diff",
+            "reindex-dryrun",
+            "reindex",
+            "graphql"
+          ]
+        }
+      }
+    },
+    {
+      "query": "GET /Patient?_summary=count",
+      "status": 200,
+      "seconds": 0.76,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "total": 3989
+    },
+    {
+      "query": "GET /Observation?_summary=count",
+      "status": 200,
+      "seconds": 1.0,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "total": 34126
+    },
+    {
+      "query": "GET /Patient?_count=100",
+      "status": 200,
+      "seconds": 1.44,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "sample": {
+        "size": 100,
+        "missing_name": 0,
+        "missing_birth_date": 4,
+        "gender": {
+          "male": 57,
+          "female": 39,
+          "absent": 4
+        }
+      },
+      "has_next": true
+    },
+    {
+      "query": "GET Patient next link (opaque cursor)",
+      "status": 200,
+      "seconds": 1.53,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "returned": 100,
+      "overlap_with_first_page": 0
+    },
+    {
+      "query": "GET /Observation?_count=100",
+      "status": 200,
+      "seconds": 2.92,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "sample": {
+        "size": 100,
+        "statuses": {
+          "final": 100
+        },
+        "value_types": {
+          "valueQuantity": 100
+        },
+        "without_value": 0,
+        "components": 0,
+        "without_coding": 0,
+        "subject_forms": {
+          "Patient": 100
+        }
+      }
+    },
+    {
+      "query": "GET /Patient?_count=1000",
+      "status": 200,
+      "seconds": 2.22,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "returned": 500
+    },
+    {
+      "query": "GET /Patient?_sort=_lastUpdated&_count=10 (strict)",
+      "status": 200,
+      "seconds": 0.8,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "returned": 10,
+      "timestamps_nondecreasing": true
+    },
+    {
+      "query": "GET /Patient?2026 lastUpdated window&_summary=count (strict)",
+      "status": 200,
+      "seconds": 0.76,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "total": 3989
+    },
+    {
+      "query": "GET /Patient?_elements=id&_count=2 (strict)",
+      "status": 200,
+      "seconds": 1.04,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "returned_field_sets": [
+        [
+          "id",
+          "meta",
+          "resourceType"
+        ],
+        [
+          "id",
+          "meta",
+          "resourceType"
+        ]
+      ]
+    },
+    {
+      "query": "GET /Patient?unsupported parameter (strict)",
+      "status": 400,
+      "seconds": 0.89,
+      "resource_type": "OperationOutcome",
+      "issue_codes": [
+        "processing"
+      ]
+    },
+    {
+      "query": "GET /Patient?_has:Observation:subject:status=final&_count=2 (strict)",
+      "status": 200,
+      "seconds": 0.9,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle"
+    },
+    {
+      "query": "GET /Observation?subject=<2 selected patient references>&_count=5 (strict)",
+      "status": 200,
+      "seconds": 1.37,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "returned": 5,
+      "all_subjects_match": true
+    },
+    {
+      "query": "GET /Observation/_history?_count=1",
+      "status": 200,
+      "seconds": 0.82,
+      "retry_after": null,
+      "rate_headers": {},
+      "resource_type": "Bundle",
+      "total": 37817
+    }
+  ]
+}

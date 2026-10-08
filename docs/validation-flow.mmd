@@ -1,0 +1,25 @@
+flowchart LR
+    subgraph C["1 · Completeness"]
+        c1["source count at transactionTime<br/>= export lines"]
+        c2["extracted<br/>= loaded + quarantined"]
+    end
+    subgraph I["2 · Integrity"]
+        i1["no duplicate records"]
+        i2["no observation<br/>without a patient"]
+        i3["no file pending or failed"]
+    end
+    subgraph K["3 · Correctness"]
+        k1["~1% sample re-mapped<br/>and compared field by field"]
+        k2["distributions match<br/>(gender, codes, status)"]
+    end
+
+    C --> G{"All checks pass<br/>and quarantine reviewed?"}
+    I --> G
+    K --> G
+    G -->|yes| OK(["Accepted"])
+    G -->|no| NO(["Investigate, fix mapping,<br/>rebuild from raw store"])
+
+    classDef ok fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef bad fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    class OK ok
+    class NO bad
