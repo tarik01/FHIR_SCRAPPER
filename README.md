@@ -207,6 +207,7 @@ I used **Claude Code** (Anthropic) as a pair programmer throughout this exercise
 - every step was run against the live sandbox;
 - results were cross-checked with ChatGPT, a different model from the one that wrote the code;
 - the test suite runs without network access;
+- the code was reviewed for readability, e.g. the `migrate_fhir` command now treats every step the same way, each one writing its own output;
 - the validation step re-maps the data from the raw store and compares it with the database. This caught a real decimal-precision bug in the generated code, which was then fixed.
 
 ## Known limitations (MVP)

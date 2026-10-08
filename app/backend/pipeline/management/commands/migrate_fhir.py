@@ -20,20 +20,19 @@ class Command(BaseCommand):
         parser.add_argument("--seed", type=int, help="validate: random seed for a reproducible sample")
 
     def handle(self, *args, **options):
-        step = options["step"]
         try:
-            if step == "validate":
-                return self.validate(options)
-            summary = self.extract(options) if step == "extract" else self.transform(options)
+            getattr(self, options["step"])(options)
         except (ExtractError, FhirError, TransformError, ValidationError) as error:
-            raise CommandError(str(error))
-        self.stdout.write(json.dumps(summary, indent=2, default=str))
+            raise CommandError(str(error)) from error
 
     def extract(self, options):
-        return asyncio.run(BulkExportExtractor(workers=options["workers"]).run())
+        self.write_json(asyncio.run(BulkExportExtractor(workers=options["workers"]).run()))
 
     def transform(self, options):
-        return TransformEngine().run(rebuild=options["rebuild"])
+        self.write_json(TransformEngine().run(rebuild=options["rebuild"]))
+
+    def write_json(self, summary):
+        self.stdout.write(json.dumps(summary, indent=2, default=str))
 
     def validate(self, options):
         report = ValidationEngine(sample_rate=options["sample_rate"], seed=options["seed"]).run()
